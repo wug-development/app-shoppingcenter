@@ -14,7 +14,7 @@ module.exports = {
     proxyTable: proxy.proxy,
 
     // Various Dev Server settings
-    host: '192.168.11.181', // can be overwritten by process.env.HOST
+    host: 'shop.roseonly.com', // can be overwritten by process.env.HOST
     port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,

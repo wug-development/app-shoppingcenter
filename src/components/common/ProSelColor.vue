@@ -3,18 +3,24 @@
         <div class="proselcolor-box">
             <div class="proselcolor-proinfo">
                 <div class="proselcolor-img">
-                    <img :src="proinfo.pic" alt="">
+                    <img :src="proinfo.selModel.color.productcolorImage" alt="">
                 </div>
                 <div class="proselcolor-name">
                     <div>{{proinfo.name}}</div>
-                    <div class="proselcolor-price">&yen;{{proinfo.price}}</div>
+                    <div class="proselcolor-price">&yen;{{proinfo.selModel.color.price}}</div>
                 </div>
                 <div class="proselcolor-close" @click="close"><span><img src="../../assets/images/close.png" alt=""></span></div>
             </div>
-            <div class="proselcolor-procolor" v-if="proinfo.color">
+            <div class="proselcolor-procolor" v-if="colorArr.length">
                 <div class="proselcolor-title">颜色：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in List" @click="selcolor=c.attrvalueids" :class="selcolor==c.attrvalueids?'cur':''" :key="i"><img :src="imgpath + c.imgpath2" alt=""></li>
+                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.color.productcolor?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productcolorValue }}</li>
+                </ul>
+            </div>
+            <div class="proselcolor-procolor" v-if="sizeArr.length">
+                <div class="proselcolor-title">大小：</div>
+                <ul class="proselcolor-list">
+                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.color.productsize?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productsizeValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-pronum">
@@ -43,7 +49,9 @@ export default {
             proinfo: {},
             num: 1,
             mNum: 1,
-            selcolor: 0
+            selcolor: {},
+            colorArr: [],
+            sizeArr: []
         }
     },
     methods: {
@@ -52,10 +60,10 @@ export default {
             this.$emit('close', false)
         },
         jia: function () {
-            if (this.num < this.proinfo.stock) {
+            if (this.num < this.proinfo.selModel.color.stock) {
                 this.num = this.num + 1
             } else {
-                this.Toast('该商品库存不足最多可买数量' + this.proinfo.stock)
+                this.Toast('该商品库存不足最多可买数量' + this.proinfo.selModel.color.stock)
             }
         },
         jian: function () {
@@ -68,7 +76,7 @@ export default {
             var pros = []
             if (s) {
                 pros = JSON.parse(s)
-                var p = pros.find((e) => { return e.id === this.proinfo.id })
+                var p = pros.find((e) => { return e.id === this.proinfo.id && e.selModel.color.id === this.proinfo.selModel.color.id })
                 if (p) {
                     p.num = this.num + p.num
                 } else {
@@ -93,6 +101,43 @@ export default {
             this.$router.push({
                 path: '/orderbooking?ty=buy'
             })
+        },
+        checkColor (c, t) {
+            if (c.stock > 0) {
+                this.proinfo.selModel.color = c
+                let arr = this.proinfo.productColorSizeStocks
+                if (t === 'color') {
+                    let arrs = []
+                    arr.forEach(item => {
+                        let _bindex = arrs.findIndex(b => {
+                            if (c.productcolor === item.productcolor) {
+                                return b.productsize === item.productsize
+                            } else {
+                                return true
+                            }
+                        })
+                        if (_bindex < 0) {
+                            arrs.push(item)
+                        }
+                    })
+                    this.sizeArr = arrs
+                } else {
+                    let arrc = []
+                    arr.forEach(item => {
+                        let _aindex = arrc.findIndex(a => {
+                            if (c.productsize === item.productsize) {
+                                return a.productcolor === item.productcolor
+                            } else {
+                                return true
+                            }
+                        })
+                        if (_aindex < 0) {
+                            arrc.push(item)
+                        }
+                    })
+                    this.colorArr = arrc
+                }
+            }
         }
     },
     watch: {
@@ -101,6 +146,35 @@ export default {
         },
         pro: function (v) {
             this.proinfo = v
+            let arr = v.productColorSizeStocks
+            let arrc = []
+            let arrs = []
+            if (arr) {
+                arr.forEach(item => {
+                    let _aindex = arrc.findIndex(a => {
+                        if (this.proinfo.selModel.color.productsize === item.productsize) {
+                            return a.productcolor === item.productcolor
+                        } else {
+                            return true
+                        }
+                    })
+                    if (_aindex < 0) {
+                        arrc.push(item)
+                    }
+                    let _bindex = arrs.findIndex(b => {
+                        if (this.proinfo.selModel.color.productcolor === item.productcolor) {
+                            return b.productsize === item.productsize
+                        } else {
+                            return true
+                        }
+                    })
+                    if (_bindex < 0) {
+                        arrs.push(item)
+                    }
+                })
+            }
+            this.sizeArr = arrs
+            this.colorArr = arrc
         },
         maxNum: function (v) {
             this.mNum = v
@@ -188,17 +262,23 @@ export default {
                         font-size: .24rem;
                         margin: 0 .2rem .2rem 0;
                         border: .02rem solid #999;
-                        line-height: .4rem;
-                        width: .9rem;
-                        height: .9rem;
+                        line-height: .5rem;
+                        height: .5rem;
+                        padding: 0 .25rem;
+                        border-radius: .5rem;
                         img{
                             display: block;
                             width: 100%;
                         }
                     }
                     .cur{
-                        color: #fff;
+                        color: #f00000;
                         border: .02rem solid #f00000;
+                        background-color: #FFDADA;
+                    }
+                    .disable{
+                        color: #ccc;
+                        border: .02rem solid #ccc;
                     }
                 }
             }

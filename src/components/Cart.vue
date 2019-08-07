@@ -9,7 +9,7 @@
                 </div>
                 <div class="cartbox-item-name">
                     <div class="item-name-xilie">{{item.name}}</div>
-                    <div class="item-name-name">&nbsp;</div>
+                    <div class="item-name-name">{{item.selModel.color.productcolorValue}} {{item.selModel.color.productsizeValue}}</div>
                     <div class="item-name-price">
                         <span>&yen; {{item.price}}</span>
                         <div class="item-name-num">
@@ -91,6 +91,7 @@ export default {
             for (var i in this.dataList) {
                 if (!this.dataList[i].issel) {
                     issels = false
+                    this.isCheck = false
                 } else {
                     this.isCheck = true
                 }
@@ -117,17 +118,19 @@ export default {
             }
         },
         jia: function (i) {
-            if (this.dataList[i].num < this.dataList[i].stock) {
+            if (this.dataList[i].num < this.dataList[i].selModel.color.stock) {
                 this.dataList[i].num = this.dataList[i].num + 1
                 sessionStorage.setItem('cart', JSON.stringify(this.dataList))
+                this.countPrice()
             } else {
-                this.Toast('该商品库存不足最多可买数量' + this.dataList[i].stock)
+                this.Toast('该商品库存不足最多可买数量' + this.dataList[i].selModel.color.stock)
             }
         },
         jian: function (i) {
             if (this.dataList[i].num > 1) {
                 this.dataList[i].num = this.dataList[i].num - 1
                 sessionStorage.setItem('cart', JSON.stringify(this.dataList))
+                this.countPrice()
             }
         },
         submitCart: function () {
@@ -202,18 +205,19 @@ function keepTwoDecimal (num) {
                     }
                 }
                 .cartbox-item-name{
-                    padding: .2rem 0 0 0;
+                    padding: .1rem 0 0 0;
                     margin-left: .3rem;
                     width: 4.58rem;
                     box-sizing: border-box;
                     .item-name-xilie{
                         color: #000;
-                        margin-bottom: .16rem;
+                        margin-bottom: .1rem;
                         font-size: .28rem;
                     }
                     .item-name-name{
                         color: #9d9d9d;
                         font-size: .24rem;
+                        margin-bottom: .1rem;
                     }
                     .item-name-price{
                         font-size: .28rem;

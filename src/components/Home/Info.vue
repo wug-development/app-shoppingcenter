@@ -8,9 +8,12 @@
         <div class="info-pro-box info-pro-service">
             <span>服务承诺</span>&nbsp;&nbsp;&nbsp;&nbsp;官方正品&nbsp;&nbsp;免邮配送&nbsp;&nbsp;同城速递
         </div>
-        <div class="info-pro-box info-pro-sel" v-if="pro.seltype" @click="ShowSelShow">
-            <span>选择</span>
-            <label>{{pro.pronameDisplay}}</label>
+        <div class="info-pro-box info-pro-sel" @click="ShowSelShow">
+            <span>已选</span>
+            <template v-if="pro.selModel">
+                <label v-if='pro.selModel.color'>{{pro.selModel.color.productcolorValue}}</label>
+                <label v-if='pro.selModel.color'>{{pro.selModel.color.productsizeValue}}</label>
+            </template>
         </div>
         <div class="info-pro-box info-pro-detail" v-if="pro.imgsDetail">
             <div class="info-pro-detail-tab">商品详情</div>
@@ -87,6 +90,8 @@ export default {
             console.log(res)
             if (res && res.data && res.data.code === 1) {
                 var data = res.data.obj.product
+                data.selModel = {}
+                data.selModel.color = data.productColorSizeStocks[0]
                 this.pro = data
                 var img = data.pic
                 var name = data.name
@@ -104,12 +109,12 @@ export default {
     methods: {
         toHome: function () {
             this.$router.push({
-              path: '/home/list?id=0'
+                path: '/home/list?id=0'
             })
         },
         toCart: function () {
             this.$router.push({
-              path: '/cart'
+                path: '/cart'
             })
         },
         buyNow: function () {

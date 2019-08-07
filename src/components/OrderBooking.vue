@@ -27,8 +27,8 @@
                         <img :src="item.pic" alt="">
                     </div>
                     <div class="proinfo">
-                        <div class="name">{{item.productname}}</div>
-                        <div class="attr"></div>
+                        <div class="name">{{item.name}}</div>
+                        <div class="attr">{{item.selModel.color.productcolorValue}} {{item.selModel.color.productsizeValue}}</div>
                         <div class="pnum"><span class="price">&yen;{{item.price}}</span><span>&#120;{{item.num}}</span></div>
                     </div>
                 </li>
@@ -97,11 +97,14 @@ export default {
                     nums += this.dataList[i].num
                 }
 
-                this.$http.get(this.apis + '/order/addOrderAjax', {params: {
+                this.$http.get(this.apis + '/order/addOrderAjaxNew', {params: {
                     openid: sessionStorage.getItem('openID'),
                     address: this.addrInfo.id,
                     productIds: pids,
-                    buyproductNumbers: nums
+                    buyproductNumbers: nums,
+                    productcolorsizestocks: [],
+                    useCredit: 0,
+                    useCreditNumber: 0
                 }})
                 .then(res => {
                     console.log(res)
@@ -341,14 +344,15 @@ function keepTwoDecimal (num) {
                     }
                     .proinfo{
                         width: 5.7rem;
-                        padding-left: .2rem;
+                        padding: .1rem 0 0 .2rem;
                         box-sizing: border-box;
                         .name{
                             font-weight: bold;
                         }
                         .attr{
-                            height: .2rem;
+                            height: .3rem;
                             color: #777;
+                            margin: .1rem 0;
                         }
                         .pnum{
                             margin-top: .1rem;
