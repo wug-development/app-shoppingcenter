@@ -8,7 +8,7 @@
         <div class="info-pro-box info-pro-service">
             <span>服务承诺</span>&nbsp;&nbsp;&nbsp;&nbsp;官方正品&nbsp;&nbsp;免邮配送&nbsp;&nbsp;同城速递
         </div>
-        <div class="info-pro-box info-pro-sel" @click="ShowSelShow">
+        <div class="info-pro-box info-pro-sel" v-if="pro.selModel" @click="ShowSelShow">
             <span>已选</span>
             <template v-if="pro.selModel">
                 <label v-if='pro.selModel.color'>{{pro.selModel.color.productcolorValue}}</label>
@@ -30,7 +30,7 @@
                     <span v-if="cartNum>0">{{cartNum}}</span>购物车
                 </li>
                 <template v-if="pro.stock > 0">
-                <li class="btnbox-item-txt btnbox-item-addcart"  @click="ShowSelShow">加入购物车</li>
+                <li class="btnbox-item-txt btnbox-item-addcart"  @click="addCart">加入购物车</li>
                 <li class="btnbox-item-txt btnbox-item-buynow" @click="buyNow">立即购买</li>
                 </template>
                 <template v-if="pro.stock <= 0">
@@ -90,8 +90,13 @@ export default {
             console.log(res)
             if (res && res.data && res.data.code === 1) {
                 var data = res.data.obj.product
+                if (res.data.obj.credit) {
+                    sessionStorage.setItem('credit', res.data.obj.credit)
+                }
                 data.selModel = {}
-                data.selModel.color = data.productColorSizeStocks[0]
+                if (data.productColorSizeStocks && data.productColorSizeStocks.length > 0) {
+                    data.selModel = data.productColorSizeStocks[0]
+                }
                 this.pro = data
                 var img = data.pic
                 var name = data.name
@@ -116,6 +121,14 @@ export default {
             this.$router.push({
                 path: '/cart'
             })
+        },
+        addCart: function () {
+            // if (this.pro.selModel) {
+                this.ShowSelShow()
+            // } else {
+            //     sessionStorage.setItem('cart', JSON.stringify(pros))
+            //     this.Toast('加入成功！')
+            // }
         },
         buyNow: function () {
             sessionStorage.setItem('buy', JSON.stringify(this.pro))

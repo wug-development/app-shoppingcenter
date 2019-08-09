@@ -24,12 +24,12 @@
             <ul class="product-list">
                 <li v-for="(item, index) in dataList" :key="index">
                     <div class="proimg">
-                        <img :src="item.pic" alt="">
+                        <img :src="item.selModel.productcolorImage || item.pic" alt="">
                     </div>
                     <div class="proinfo">
                         <div class="name">{{item.name}}</div>
-                        <div class="attr">{{item.selModel.color.productcolorValue}} {{item.selModel.color.productsizeValue}}</div>
-                        <div class="pnum"><span class="price">&yen;{{item.price}}</span><span>&#120;{{item.num}}</span></div>
+                        <div class="attr">{{item.selModel.productcolorValue}} {{item.selModel.productsizeValue}}</div>
+                        <div class="pnum"><span class="price">&yen;{{item.selModel.price || item.price}}</span><span>&#120;{{item.num}}</span></div>
                     </div>
                 </li>
             </ul>
@@ -190,7 +190,7 @@ export default {
             if (pros) {
                 this.dataList = JSON.parse(pros)
                 for (let i in this.dataList) {
-                    this.totalPrice = keepTwoDecimal(this.totalPrice + this.dataList[i].price * this.dataList[i].num)
+                    this.totalPrice = keepTwoDecimal(this.totalPrice + (this.dataList[i].selModel.price || this.dataList[i].price) * this.dataList[i].num)
                 }
             }
         } else {
@@ -198,7 +198,7 @@ export default {
             if (pros) {
                 let pro = JSON.parse(pros)
                 pro.num = 1
-                this.totalPrice = pro.price
+                this.totalPrice = pro.selModel.price || pro.price
                 this.dataList = [pro]
             }
         }

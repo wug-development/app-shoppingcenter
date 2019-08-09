@@ -3,24 +3,24 @@
         <div class="proselcolor-box">
             <div class="proselcolor-proinfo">
                 <div class="proselcolor-img">
-                    <img :src="proinfo.selModel.color.productcolorImage" alt="">
+                    <img :src="proinfo.selModel.productcolorImage || proinfo.pic" alt="">
                 </div>
                 <div class="proselcolor-name">
                     <div>{{proinfo.name}}</div>
-                    <div class="proselcolor-price">&yen;{{proinfo.selModel.color.price}}</div>
+                    <div class="proselcolor-price">&yen;{{proinfo.selModel.price || proinfo.price}}</div>
                 </div>
                 <div class="proselcolor-close" @click="close"><span><img src="../../assets/images/close.png" alt=""></span></div>
             </div>
             <div class="proselcolor-procolor" v-if="colorArr.length">
                 <div class="proselcolor-title">颜色：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.color.productcolor?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productcolorValue }}</li>
+                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.productcolor?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productcolorValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-procolor" v-if="sizeArr.length">
                 <div class="proselcolor-title">大小：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.color.productsize?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productsizeValue }}</li>
+                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.productsize?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productsizeValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-pronum">
@@ -60,10 +60,18 @@ export default {
             this.$emit('close', false)
         },
         jia: function () {
-            if (this.num < this.proinfo.selModel.color.stock) {
-                this.num = this.num + 1
+            if (this.proinfo.selModel.stock) {
+                if (this.num < this.proinfo.selModel.stock) {
+                    this.num = this.num + 1
+                } else {
+                    this.Toast('该商品库存不足最多可买数量' + this.proinfo.selModel.stock)
+                }
             } else {
-                this.Toast('该商品库存不足最多可买数量' + this.proinfo.selModel.color.stock)
+                if (this.num < this.proinfo.stock) {
+                    this.num = this.num + 1
+                } else {
+                    this.Toast('该商品库存不足最多可买数量' + this.proinfo.stock)
+                }
             }
         },
         jian: function () {
@@ -76,7 +84,7 @@ export default {
             var pros = []
             if (s) {
                 pros = JSON.parse(s)
-                var p = pros.find((e) => { return e.id === this.proinfo.id && e.selModel.color.id === this.proinfo.selModel.color.id })
+                var p = pros.find((e) => { return e.id === this.proinfo.id && e.selModel.id === this.proinfo.selModel.id })
                 if (p) {
                     p.num = this.num + p.num
                 } else {
@@ -149,10 +157,10 @@ export default {
             let arr = v.productColorSizeStocks
             let arrc = []
             let arrs = []
-            if (arr) {
+            if (arr && arr.length) {
                 arr.forEach(item => {
                     let _aindex = arrc.findIndex(a => {
-                        if (this.proinfo.selModel.color.productsize === item.productsize) {
+                        if (this.proinfo.selModel.productsize === item.productsize) {
                             return a.productcolor === item.productcolor
                         } else {
                             return true
@@ -162,7 +170,7 @@ export default {
                         arrc.push(item)
                     }
                     let _bindex = arrs.findIndex(b => {
-                        if (this.proinfo.selModel.color.productcolor === item.productcolor) {
+                        if (this.proinfo.selModel.productcolor === item.productcolor) {
                             return b.productsize === item.productsize
                         } else {
                             return true

@@ -5,11 +5,11 @@
             <li class="cartbox-item" v-for="(item, index) in dataList" :key="index" @touchstart="showDeleteButton(item)" @touchend="clearLoop">
                 <div :class='(item.issel ? "cur ": "") + "cartbox-item-radio"' @click="checkOne(item)"></div>
                 <div class="cartbox-item-img">
-                    <img :src="item.pic" alt="">
+                    <img :src="item.selModel.productcolorImage || item.pic" alt="">
                 </div>
                 <div class="cartbox-item-name">
                     <div class="item-name-xilie">{{item.name}}</div>
-                    <div class="item-name-name">{{item.selModel.color.productcolorValue}} {{item.selModel.color.productsizeValue}}</div>
+                    <div class="item-name-name">{{item.selModel.productcolorValue}} {{item.selModel.productsizeValue}}</div>
                     <div class="item-name-price">
                         <span>&yen; {{item.price}}</span>
                         <div class="item-name-num">
@@ -118,12 +118,22 @@ export default {
             }
         },
         jia: function (i) {
-            if (this.dataList[i].num < this.dataList[i].selModel.color.stock) {
-                this.dataList[i].num = this.dataList[i].num + 1
-                sessionStorage.setItem('cart', JSON.stringify(this.dataList))
-                this.countPrice()
+            if (this.dataList[i].selModel.stock) {
+                if (this.dataList[i].num < this.dataList[i].selModel.stock) {
+                    this.dataList[i].num = this.dataList[i].num + 1
+                    sessionStorage.setItem('cart', JSON.stringify(this.dataList))
+                    this.countPrice()
+                } else {
+                    this.Toast('该商品库存不足最多可买数量' + this.dataList[i].selModel.stock)
+                }
             } else {
-                this.Toast('该商品库存不足最多可买数量' + this.dataList[i].selModel.color.stock)
+                if (this.dataList[i].num < this.dataList[i].stock) {
+                    this.dataList[i].num = this.dataList[i].num + 1
+                    sessionStorage.setItem('cart', JSON.stringify(this.dataList))
+                    this.countPrice()
+                } else {
+                    this.Toast('该商品库存不足最多可买数量' + this.dataList[i].stock)
+                }
             }
         },
         jian: function (i) {
