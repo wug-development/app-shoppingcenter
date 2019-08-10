@@ -53,7 +53,7 @@ export default {
         if (this.wxCode) {
             sessionStorage.setItem('wxcode', this.wxCode)
         } else {
-            this.wxCode = sessionStorage.getItem('wxcode') || '071i89VD0gtlvj2Pe5VD0amlVD0i89VT'
+            this.wxCode = sessionStorage.getItem('wxcode') || '0210UVHx1ZBZea06jFGx1uM1Ix10UVHs'
             // window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23%2Fhome%2Flist%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
         }
         this.loadBottom()
@@ -82,8 +82,8 @@ export default {
                             sessionStorage.setItem('openID', this.wxOpenID)
                         }
                         var data = res.data.obj
-                        if (data.credit) {
-                            sessionStorage.setItem('credit', data.credit)
+                        if (data.user) {
+                            sessionStorage.setItem('user', JSON.stringify(data.user))
                         }
                         if (data.productCategory && data.productCategory.video) {
                             this.videoSrc = data.productCategory.video

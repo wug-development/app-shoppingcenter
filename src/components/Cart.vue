@@ -11,7 +11,7 @@
                     <div class="item-name-xilie">{{item.name}}</div>
                     <div class="item-name-name">{{item.selModel.productcolorValue}} {{item.selModel.productsizeValue}}</div>
                     <div class="item-name-price">
-                        <span>&yen; {{item.price}}</span>
+                        <span>&yen; {{item.selModel.price || item.price}}</span>
                         <div class="item-name-num">
                             <div class="num-jian" @click="jian(index)"><img src="../assets/images/jian.png" alt=""></div>
                             <div class="num-num"><input type="tel" v-model="item.num" readonly /></div>
@@ -83,6 +83,7 @@ export default {
                 this.dataList[i].issel = this.isAll
             }
             this.isCheck = this.isAll
+            sessionStorage.setItem('cart', JSON.stringify(this.dataList))
             this.countPrice()
         },
         checkOne: function (item) {
@@ -97,6 +98,7 @@ export default {
                 }
             }
             this.isAll = issels
+            sessionStorage.setItem('cart', JSON.stringify(this.dataList))
             this.countPrice()
         },
         showData: function () {
@@ -111,7 +113,7 @@ export default {
             for (var i in this.dataList) {
                 if (this.dataList[i].issel) {
                     this.isCheck = true
-                    this.totalPrice = keepTwoDecimal(this.totalPrice + this.dataList[i].price * this.dataList[i].num)
+                    this.totalPrice = keepTwoDecimal(this.totalPrice + (this.dataList[i].selModel.price || this.dataList[i].price) * this.dataList[i].num)
                 } else {
                     this.isAll = false
                 }

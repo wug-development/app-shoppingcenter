@@ -26,6 +26,8 @@ import datetimepicker from 'mint-ui/lib/datetime-picker'
 import 'mint-ui/lib/datetime-picker/style.css'
 import popup from 'mint-ui/lib/popup'
 import 'mint-ui/lib/popup/style.css'
+import switchs from 'mint-ui/lib/switch'
+import 'mint-ui/lib/switch/style.css'
 
 Vue.config.productionTip = false
 Vue.prototype.$http = Axios
@@ -45,6 +47,7 @@ Vue.component(messagebox.name, messagebox)
 Vue.component(picker.name, picker)
 Vue.component(datetimepicker.name, datetimepicker)
 Vue.component(popup.name, popup)
+Vue.component(switchs.name, switchs)
 
 /* eslint-disable no-new */
 new Vue({

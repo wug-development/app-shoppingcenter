@@ -3,16 +3,16 @@
         <SBanner :dataList = 'pro.imgsLunbo' class="infobox-banner" :height='7.5'></SBanner>
         <div class="info-pro-box info-pro-nameprice">
             <div class="info-pro-name">{{pro.name}}</div>
-            <div class="info-pro-price">&yen;{{pro.price}}</div>
+            <div class="info-pro-price">&yen;{{pro.selModel.price || pro.price}}</div>
         </div>
         <div class="info-pro-box info-pro-service">
             <span>服务承诺</span>&nbsp;&nbsp;&nbsp;&nbsp;官方正品&nbsp;&nbsp;免邮配送&nbsp;&nbsp;同城速递
         </div>
-        <div class="info-pro-box info-pro-sel" v-if="pro.selModel" @click="ShowSelShow">
+        <div class="info-pro-box info-pro-sel" v-if="pro.selModel && pro.selModel.productcolorValue" @click="ShowSelShow">
             <span>已选</span>
             <template v-if="pro.selModel">
-                <label v-if='pro.selModel.color'>{{pro.selModel.color.productcolorValue}}</label>
-                <label v-if='pro.selModel.color'>{{pro.selModel.color.productsizeValue}}</label>
+                <label v-if='pro.selModel'>{{pro.selModel.productcolorValue}}</label>
+                <label v-if='pro.selModel'>{{pro.selModel.productsizeValue}}</label>
             </template>
         </div>
         <div class="info-pro-box info-pro-detail" v-if="pro.imgsDetail">
@@ -90,8 +90,8 @@ export default {
             console.log(res)
             if (res && res.data && res.data.code === 1) {
                 var data = res.data.obj.product
-                if (res.data.obj.credit) {
-                    sessionStorage.setItem('credit', res.data.obj.credit)
+                if (res.data.obj.user) {
+                    sessionStorage.setItem('user', JSON.stringify(res.data.obj.user))
                 }
                 data.selModel = {}
                 if (data.productColorSizeStocks && data.productColorSizeStocks.length > 0) {

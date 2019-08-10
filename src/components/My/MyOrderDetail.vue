@@ -14,14 +14,14 @@
         <div class="products-box">
             <div class="storename">Lovzvzu 商城</div>
             <ul class="product-list">
-                <li>
+                <li v-for="(p, index) in orderinfo.orderProductList" :key="index">
                     <div class="proimg">
-                        <img :src="orderinfo.pic" alt="">
+                        <img :src="p.productcoverimage" alt="">
                     </div>
                     <div class="proinfo">
-                        <div class="name">{{orderinfo.productname}}</div>
-                        <div class="attr"></div>
-                        <div class="pnum"><span class="price">&yen;{{orderinfo.price}}</span><span>&#120;{{orderinfo.productnumber}}</span></div>
+                        <div class="name">{{p.productname}}</div>
+                        <div class="attr">{{p.color}} {{p.size}}</div>
+                        <div class="pnum"><span class="price">&yen;{{p.productprice}}</span><span>&#120;{{p.buynumber}}</span></div>
                     </div>
                 </li>
             </ul>
@@ -34,10 +34,11 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
+                <li v-if="orderinfo.usecredit == 1"><span>积分</span><span>-&yen;{{credit.madeCredit.usercreditnumber}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
-                合计：<span>{{orderinfo.price}}</span>
+                合计：<span>&yen;{{orderinfo.price}}</span>
             </div>
         </div>
         <div class="totalbox" v-if="orderinfo.status == 1">

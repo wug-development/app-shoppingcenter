@@ -7,20 +7,20 @@
             <span :class='orderType == 2 ? "cur": ""' @click="toOrderList(2)">待收货</span>
         </div>
         <ul class="order-list">
-            <li class="order-item" v-for="(item, i) in orderList" :key="i">
+            <li class="order-item" v-for="(item, i) in orderList" :key="i" @click="toDetail(item)">
                 <div class="orderno">
                     <span>订单编号：{{item.orderno}}</span>
                     <span class="status">{{checkstatus(item.status)}}</span>
                 </div>
                 <ul class="product-list">
-                    <li @click="toDetail(item)">
+                    <li v-for="(p, index) in item.orderProductList" :key="index">
                         <div class="proimg">
-                            <img :src="item.pic" alt="">
+                            <img :src="p.productcoverimage" alt="">
                         </div>
                         <div class="proinfo">
-                            <div class="name">{{item.productname}}</div>
-                            <div class="attr"></div>
-                            <div class="pnum"><span class="price">&yen;{{item.productprice}}</span><span>&#120;{{item.productnumber}}</span></div>
+                            <div class="name">{{p.productname}}</div>
+                            <div class="attr">{{p.color}} {{p.size}}</div>
+                            <div class="pnum"><span class="price">&yen;{{p.productprice}}</span><span>&#120;{{p.buynumber}}</span></div>
                         </div>
                     </li>
                 </ul>

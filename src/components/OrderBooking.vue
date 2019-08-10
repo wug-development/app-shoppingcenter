@@ -33,15 +33,33 @@
                     </div>
                 </li>
             </ul>
-            <div class="delivery">
-                <span>配送方式</span>
-                <span>快递免运费</span>
+            <div class="other-box">
+                <div class="delivery">
+                    <div class="name"><label>配送方式</label></div>
+                    <div>快递免运费</div>
+                </div>
+                <div class="delivery" v-if="credit.creditRule.status == 0 && proPrice >= credit.creditRule.orderprice">
+                    <div class="name">
+                        <label>积分</label>
+                        <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diYen}}</span>
+                        <span class="jifen" @click="showDesc" v-else>共有{{credit.user.credit}}积分，满{{credit.creditRule.creditcanuse}}可用</span>
+                    </div>
+                    <div><mt-switch v-model="credit.madeCredit.isMade"></mt-switch></div>
+                </div>
+                <div class="jifen-made" v-if="credit.madeCredit.isMade">
+                    <span>使用</span>
+                    <span class="ddl_jifen" @click="jifenVisible = true">{{credit.madeCredit.Number}}</span>
+                    <span>积分</span>
+                    <span>，抵</span>
+                    <span class="jifen rmb" @click="showDesc">&yen;{{credit.madeCredit.diYen}}.00</span>
+                </div>
             </div>
         </div>
 
         <div class="totalprice">
             <ul class="price-item">
-                <li><span>商品金额</span><span>&yen;{{totalPrice}}</span></li>
+                <li><span>商品金额</span><span>&yen;{{proPrice}}</span></li>
+                <li v-if="credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
@@ -53,6 +71,15 @@
             <div class="amount">合计：<span>&yen;{{totalPrice}}</span></div>
             <div class="btn" @click="submitOrder">提交订单</div>
         </div>
+
+        <mt-popup v-model="jifenVisible" class="jifen-select" position="bottom">
+            <div class="btn-box">
+                <span class="btn-cancel" @click="jifenVisible = false">取消</span>
+                <span></span>
+                <span class="btn-sure" @click="btn_ok">确定</span>
+            </div>
+            <mt-picker :slots="jifenSlots" @change="onValuesChange" :visibleItemCount="3"></mt-picker>
+        </mt-popup>
     </div>
 </template>
 
@@ -64,9 +91,28 @@ export default {
             isAddr: 0,
             buytype: '',
             dataList: [],
+            proPrice: 0,
             totalPrice: 0,
             addrInfo: {},
-            isSubmited: false
+            isSubmited: false,
+            credit: {
+                madeCredit: {
+                    isMade: false,
+                    Number: 0,
+                    usable: 0,
+                    diYen: 0
+                },
+                creditRule: {},
+                user: {}
+            },
+            pickerValue: 0,
+            jifenVisible: false,
+            jifenSlots: [{
+                flex: 1,
+                values: [],
+                className: 'slot1',
+                textAlign: 'center'
+            }]
         }
     },
     methods: {
@@ -80,6 +126,15 @@ export default {
                 path: '/my/myaddress?id=' + id + '&ty=' + this.buytype
             })
         },
+        onValuesChange: function (picker, v) {
+            this.pickerValue = v[0]
+        },
+        btn_ok: function () {
+            this.credit.madeCredit.Number = this.pickerValue
+            this.jifenVisible = false
+            this.credit.madeCredit.diYen = this.credit.madeCredit.Number / this.credit.creditRule.creditunit
+            this.countPrice()
+        },
         submitOrder: function () {
             if (this.isSubmited) {
                 return false
@@ -88,6 +143,7 @@ export default {
                 this.isSubmited = true
                 let pids = ''
                 let nums = ''
+                let _models = ''
                 for (let i in this.dataList) {
                     if (i > 0) {
                         pids = pids + ','
@@ -95,6 +151,12 @@ export default {
                     }
                     pids += this.dataList[i].id
                     nums += this.dataList[i].num
+                    if (this.dataList[i].selModel && this.dataList[i].selModel.id) {
+                        if (_models.length > 0) {
+                            _models = _models + ','
+                        }
+                        _models += this.dataList[i].selModel.id
+                    }
                 }
 
                 this.$http.get(this.apis + '/order/addOrderAjaxNew', {params: {
@@ -102,9 +164,9 @@ export default {
                     address: this.addrInfo.id,
                     productIds: pids,
                     buyproductNumbers: nums,
-                    productcolorsizestocks: [],
-                    useCredit: 0,
-                    useCreditNumber: 0
+                    productcolorsizestocks: _models,
+                    useCredit: this.credit.madeCredit.isMade ? 1 : 0,
+                    useCreditNumber: this.credit.madeCredit.Number
                 }})
                 .then(res => {
                     console.log(res)
@@ -180,6 +242,14 @@ export default {
                 this.Toast('微信支付调用失败')
                 this.isSubmited = false
             })
+        },
+        countPrice () {
+            if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade) {
+                this.totalPrice = this.totalPrice - this.credit.madeCredit.diYen
+            }
+        },
+        showDesc () {
+            this.$messagebox('温馨提示', this.credit.creditRule.description)
         }
     },
     beforeMount () {
@@ -188,9 +258,12 @@ export default {
         if (this.buytype === 'cart') {
             let pros = sessionStorage.getItem('cart')
             if (pros) {
-                this.dataList = JSON.parse(pros)
-                for (let i in this.dataList) {
-                    this.totalPrice = keepTwoDecimal(this.totalPrice + (this.dataList[i].selModel.price || this.dataList[i].price) * this.dataList[i].num)
+                let _list = JSON.parse(pros)
+                for (let i in _list) {
+                    if (_list[i].issel) {
+                        this.dataList.push(_list[i])
+                        this.proPrice += keepTwoDecimal(this.totalPrice + (_list[i].selModel.price || _list[i].price) * _list[i].num)
+                    }
                 }
             }
         } else {
@@ -198,10 +271,11 @@ export default {
             if (pros) {
                 let pro = JSON.parse(pros)
                 pro.num = 1
-                this.totalPrice = pro.selModel.price || pro.price
+                this.proPrice = pro.selModel.price || pro.price
                 this.dataList = [pro]
             }
         }
+        this.totalPrice = this.proPrice
         let selAddr = this.$route.query.selAddr
         if (selAddr) {
             this.addrInfo = JSON.parse(sessionStorage.getItem('selAddr'))
@@ -209,6 +283,35 @@ export default {
         } else {
             this.getAddr()
         }
+
+        let _user = sessionStorage.getItem('user')
+        if (_user) {
+            this.credit.user = JSON.parse(_user)
+        }
+
+        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {}})
+        .then(res => {
+            if (res && res.data && res.data.code === 1) {
+                this.credit.creditRule = res.data.obj.creditRule
+                const rule = this.credit.creditRule
+                console.log(rule)
+                if (rule.status === 0) {
+                    let arr = []
+                    for (let i = rule.creditunit; i < this.credit.user.credit; i += rule.creditunit) {
+                        if (this.proPrice / 2 > (i / this.credit.creditRule.creditunit)) {
+                            arr.push(i)
+                        } else {
+                            console.log(i)
+                            break
+                        }
+                    }
+                    if (arr.length > 0) {
+                        this.jifenSlots[0].values = arr
+                        this.credit.madeCredit.usable = arr[arr.length - 1]
+                    }
+                }
+            }
+        })
     }
 }
 
@@ -365,14 +468,92 @@ function keepTwoDecimal (num) {
                     }
                 }
             }
-            .delivery{
-                background-color: #fff;
+            .other-box{
                 padding: 0 .2rem;
-                display: flex;
-                height: .8rem;
-                line-height: .8rem;
-                display: flex;
-                justify-content: space-between;
+                background-color: #fff;
+                .delivery{
+                    display: flex;
+                    height: .8rem;
+                    line-height: .8rem;
+                    justify-content: space-between;
+                    border-top: .02rem solid #ddd;
+                    box-sizing: border-box;
+                    .name{
+                        display: flex;
+                        label{
+                            min-width: 1rem;
+                        }
+                        .cur{
+                            font-weight: bold;
+                        }
+                    }
+                    .mint-switch{
+                        top: .18rem;
+                        height: .4rem;
+                        .mint-switch-core{
+                            height: .44rem;
+                        }
+                        .mint-switch-input:checked + .mint-switch-core {
+                            border-color: #1AAD19;
+                            background-color: #1AAD19;
+                        }
+                        .mint-switch-input:checked + .mint-switch-core::after {
+                            transform: translateX(30px);
+                        }
+                        .mint-switch-core::before{
+                            height: .4rem;
+                        }
+                        .mint-switch-core::after {
+                            width: .4rem;
+                            height: .4rem;
+                        }
+                    }
+                }
+                .delivery:first-child{
+                    border: 0;
+                }
+                .jifen-made{
+                    display: flex;
+                    height: .8rem;
+                    line-height: .8rem;
+                    .ddl_jifen{
+                        margin: .2rem .1rem 0 .1rem;
+                        min-width: 1rem;
+                        height: .4rem;
+                        line-height: .4rem;
+                        border: .02rem solid #ccc;
+                        padding: 0 .4rem 0 .1rem;
+                        position: relative;
+                        box-sizing: border-box;
+                    }
+                    .ddl_jifen::after{
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        width: .4rem;
+                        height: .4rem;
+                        background: url('../assets/images/right.png') no-repeat center;
+                        background-size: .3rem;
+                        transform: rotate(90deg);
+                    }
+                    .rmb{
+                        color: #f00000;
+                    }
+                }
+                .jifen::after{
+                    content: "?";
+                    color: #666;
+                    font-size: .24rem;
+                    display: inline-block;
+                    width: .24rem;
+                    height: .24rem;
+                    line-height: .24rem;
+                    text-align: center;
+                    border-radius: .24rem;
+                    border: .02rem solid #666;
+                    margin-left: .1rem;
+                }
             }
         }
         .totalprice{
@@ -431,6 +612,30 @@ function keepTwoDecimal (num) {
             }
             .btn:active{
                 background-color: #DA0000;
+            }
+        }
+        .jifen-select{
+            width: 100%;
+            height: 138px;
+            .btn-box{
+                display: flex;
+                height: 30px;
+                justify-content: space-around;
+                align-items: center;
+                box-shadow: 2px 2px 4px #ddd;
+                span{
+                    padding: 0 20px;
+                    height: 24px;
+                    line-height: 24px;
+                    border-radius: 5px;
+                }
+                .btn-cancel{
+                    background-color: #ddd;
+                }
+                .btn-sure{
+                    background-color: #c71f2c;
+                    color: #fff;
+                }
             }
         }
     }
