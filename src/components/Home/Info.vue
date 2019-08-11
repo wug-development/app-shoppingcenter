@@ -1,9 +1,9 @@
 <template>
     <div id="Info" class="infobox">
-        <SBanner :dataList = 'pro.imgsLunbo' class="infobox-banner" :height='7.5'></SBanner>
+        <SBanner :dataList = 'pro.imgsLunbo' :img = "pro.selModel.productcolorImage" class="infobox-banner" :height='7.5'></SBanner>
         <div class="info-pro-box info-pro-nameprice">
             <div class="info-pro-name">{{pro.name}}</div>
-            <div class="info-pro-price">&yen;{{pro.selModel.price || pro.price}}</div>
+            <div class="info-pro-price">&yen;{{(pro.selModel && pro.selModel.price) || pro.price}}</div>
         </div>
         <div class="info-pro-box info-pro-service">
             <span>服务承诺</span>&nbsp;&nbsp;&nbsp;&nbsp;官方正品&nbsp;&nbsp;免邮配送&nbsp;&nbsp;同城速递
@@ -51,7 +51,9 @@ export default {
     data () {
         return {
             id: 0,
-            pro: {},
+            pro: {
+                selModel: {}
+            },
             SelColorIsShow: false,
             cartNum: 0,
             wxCode: '',
@@ -65,6 +67,7 @@ export default {
     beforeMount () {
         this.$store.state.menu = false
         this.id = this.$route.query.id
+        const modelID = this.$route.query.mid
         var isshare = getUrlParams('isshare')
         if (isshare === '1') {
             window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23%2Fhome%2Finfo%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
@@ -95,8 +98,18 @@ export default {
                 }
                 data.selModel = {}
                 if (data.productColorSizeStocks && data.productColorSizeStocks.length > 0) {
-                    data.selModel = data.productColorSizeStocks[0]
+                    if (modelID) {
+                        for (let i in data.productColorSizeStocks) {
+                            if (Number(data.productColorSizeStocks[i].id) === Number(modelID)) {
+                                data.selModel = data.productColorSizeStocks[i]
+                                break
+                            }
+                        }
+                    } else {
+                        data.selModel = data.productColorSizeStocks[0]
+                    }
                 }
+                console.log(data.selModel.price)
                 this.pro = data
                 var img = data.pic
                 var name = data.name

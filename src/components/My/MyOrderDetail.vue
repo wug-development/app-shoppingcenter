@@ -14,7 +14,7 @@
         <div class="products-box">
             <div class="storename">Lovzvzu 商城</div>
             <ul class="product-list">
-                <li v-for="(p, index) in orderinfo.orderProductList" :key="index">
+                <li v-for="(p, index) in orderinfo.orderProductList" :key="index" @click="toinfo(p.productid, p.productcolorsizestock)">
                     <div class="proimg">
                         <img :src="p.productcoverimage" alt="">
                     </div>
@@ -34,7 +34,7 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
-                <li v-if="orderinfo.usecredit == 1"><span>积分</span><span>-&yen;{{credit.madeCredit.usercreditnumber}}.00</span></li>
+                <li v-if="orderinfo.creditmoney && orderinfo.creditmoney > 0"><span>积分</span><span>-&yen;{{orderinfo.creditmoney}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
@@ -69,6 +69,11 @@ export default {
         console.log(this.orderinfo)
     },
     methods: {
+        toinfo: function (id, mid) {
+            this.$router.push({
+                path: '/home/info?id=' + id + '&mid=' + mid
+            })
+        },
         wxPay: function () {
             this.$http.get(this.apis + '/payWeixin/wxPayByWeb', {params: {
                 out_trade_no: this.orderinfo.orderno

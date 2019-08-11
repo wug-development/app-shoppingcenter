@@ -113,6 +113,7 @@ export default {
         checkColor (c, t) {
             if (c.stock > 0) {
                 this.proinfo.selModel = c
+                console.log(c)
                 let arr = this.proinfo.productColorSizeStocks
                 if (t === 'color') {
                     let arrs = []

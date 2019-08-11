@@ -12,7 +12,7 @@
 
 <script>
 export default {
-    props: ['dataList', 'height'],
+    props: ['dataList', 'height', 'img'],
     name: 'Swipe',
     data () {
         return {
@@ -23,6 +23,9 @@ export default {
     watch: {
         dataList (v) {
             this.arr = v
+        },
+        img (v) {
+            this.arr = [v]
         },
         height (v) {
             this.h = v + 'rem'
