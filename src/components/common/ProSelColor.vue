@@ -14,13 +14,13 @@
             <div class="proselcolor-procolor" v-if="colorArr.length">
                 <div class="proselcolor-title">颜色：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.productcolor?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productcolorValue }}</li>
+                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.productcolor?'cur':'') + (c.stock > 0 && c.isColorCur?'':' disable')" :key="i">{{c.productcolorValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-procolor" v-if="sizeArr.length">
                 <div class="proselcolor-title">大小：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.productsize?'cur':'') + (c.stock < 1?' disable':'')" :key="i">{{c.productsizeValue }}</li>
+                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.productsize?'cur':'') + (c.stock > 0 && c.isSizeCur?'':' disable')" :key="i">{{c.productsizeValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-pronum">
@@ -105,6 +105,7 @@ export default {
         },
         buyNow: function () {
             this.close()
+            this.proinfo.num = this.num
             sessionStorage.setItem('buy', JSON.stringify(this.proinfo))
             this.$router.push({
                 path: '/orderbooking?ty=buy'
@@ -112,35 +113,50 @@ export default {
         },
         checkColor (c, t) {
             if (c.stock > 0) {
-                this.proinfo.selModel = c
-                console.log(c)
-                let arr = this.proinfo.productColorSizeStocks
-                if (t === 'color') {
+                if (t === 'color' && c.isColorCur) {
+                    this.proinfo.selModel = c
+                    let arr = this.proinfo.productColorSizeStocks
                     let arrs = []
                     arr.forEach(item => {
+                        if (item.productcolor === c.productcolor) {
+                            item.isSizeCur = true
+                            arrs.push(item)
+                        }
+                    })
+                    arr.forEach(item => {
                         let _bindex = arrs.findIndex(b => {
-                            if (c.productcolor === item.productcolor) {
-                                return b.productsize === item.productsize
-                            } else {
-                                return true
-                            }
+                            return b.productsize === item.productsize
                         })
                         if (_bindex < 0) {
+                            if (item.productcolor === c.productcolor) {
+                                item.isSizeCur = true
+                            } else {
+                                item.isSizeCur = false
+                            }
                             arrs.push(item)
                         }
                     })
                     this.sizeArr = arrs
-                } else {
+                } else if (t === 'size' && c.isSizeCur) {
+                    this.proinfo.selModel = c
+                    let arr = this.proinfo.productColorSizeStocks
                     let arrc = []
                     arr.forEach(item => {
-                        let _aindex = arrc.findIndex(a => {
-                            if (c.productsize === item.productsize) {
-                                return a.productcolor === item.productcolor
-                            } else {
-                                return true
-                            }
+                        if (item.productsize === c.productsize) {
+                            item.isColorCur = true
+                            arrc.push(item)
+                        }
+                    })
+                    arr.forEach(item => {
+                        let _bindex = arrc.findIndex(b => {
+                            return b.productcolor === item.productcolor
                         })
-                        if (_aindex < 0) {
+                        if (_bindex < 0) {
+                            if (item.productsize === c.productsize) {
+                                item.isColorCur = true
+                            } else {
+                                item.isColorCur = false
+                            }
                             arrc.push(item)
                         }
                     })
@@ -161,23 +177,25 @@ export default {
             if (arr && arr.length) {
                 arr.forEach(item => {
                     let _aindex = arrc.findIndex(a => {
-                        if (this.proinfo.selModel.productsize === item.productsize) {
-                            return a.productcolor === item.productcolor
-                        } else {
-                            return true
-                        }
+                        return a.productcolor === item.productcolor
                     })
                     if (_aindex < 0) {
+                        if (item.productsize === this.proinfo.selModel.productsize) {
+                            item.isColorCur = true
+                        } else {
+                            item.isColorCur = false
+                        }
                         arrc.push(item)
                     }
                     let _bindex = arrs.findIndex(b => {
-                        if (this.proinfo.selModel.productcolor === item.productcolor) {
-                            return b.productsize === item.productsize
-                        } else {
-                            return true
-                        }
+                        return b.productsize === item.productsize
                     })
                     if (_bindex < 0) {
+                        if (item.productcolor === this.proinfo.selModel.productcolor) {
+                            item.isSizeCur = true
+                        } else {
+                            item.isSizeCur = false
+                        }
                         arrs.push(item)
                     }
                 })

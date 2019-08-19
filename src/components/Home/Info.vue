@@ -1,6 +1,6 @@
 <template>
     <div id="Info" class="infobox">
-        <SBanner :dataList = 'pro.imgsLunbo' :img = "pro.selModel.productcolorImage" class="infobox-banner" :height='7.5'></SBanner>
+        <SBanner :dataList = 'pro.imgsLunbo' class="infobox-banner" :height='7.5'></SBanner>
         <div class="info-pro-box info-pro-nameprice">
             <div class="info-pro-name">{{pro.name}}</div>
             <div class="info-pro-price">&yen;{{(pro.selModel && pro.selModel.price) || pro.price}}</div>

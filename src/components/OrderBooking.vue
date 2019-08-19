@@ -270,8 +270,7 @@ export default {
             let pros = sessionStorage.getItem('buy')
             if (pros) {
                 let pro = JSON.parse(pros)
-                pro.num = 1
-                this.proPrice = pro.selModel.price || pro.price
+                this.proPrice = keepTwoDecimal(this.totalPrice + (pro.selModel.price || pro.price) * pro.num)
                 this.dataList = [pro]
             }
         }
