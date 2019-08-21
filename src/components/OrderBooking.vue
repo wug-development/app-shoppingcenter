@@ -44,7 +44,7 @@
                         <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diCountYen}}</span>
                         <span class="jifen" @click="showDesc" v-else>共有{{credit.user.credit}}积分，满{{credit.creditRule.creditcanuse}}可用</span>
                     </div>
-                    <div><mt-switch v-model="credit.madeCredit.isMade"></mt-switch></div>
+                    <div><mt-switch v-model="credit.madeCredit.isMade" @change="openCloseCredit"></mt-switch></div>
                 </div>
                 <div class="jifen-made" v-if="credit.madeCredit.isMade">
                     <span>使用</span>
@@ -59,7 +59,7 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{proPrice}}</span></li>
-                <li v-if="credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
+                <li v-if="credit.madeCredit.isMade && credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
@@ -129,6 +129,9 @@ export default {
         },
         onValuesChange: function (picker, v) {
             this.pickerValue = v[0]
+        },
+        openCloseCredit: function () {
+            this.countPrice()
         },
         btn_ok: function () {
             this.credit.madeCredit.Number = this.pickerValue || 0
@@ -245,8 +248,10 @@ export default {
             })
         },
         countPrice () {
-            if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade) {
+            if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
                 this.totalPrice = keepTwoDecimal(this.proPrice - this.credit.madeCredit.diYen)
+            } else {
+                this.totalPrice = keepTwoDecimal(this.proPrice)
             }
         },
         showDesc () {

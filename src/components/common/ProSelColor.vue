@@ -113,7 +113,6 @@ export default {
             })
         },
         checkColor (c, t) {
-            console.log(c)
             if (c.stock > 0) {
                 if (t === 'color' && c.isColorCur) {
                     if (c.productcolor === this.selModel.productcolor) {
@@ -123,6 +122,11 @@ export default {
                         this.proinfo.selModel = c
                         this.selModel = JSON.parse(JSON.stringify(c))
                     }
+                    /* else if (this.selModel.productsize === 0) {
+                        this.num = 1
+                        c.productsize = 0
+                        this.selModel = JSON.parse(JSON.stringify(c))
+                    } */
                     let arr = this.proinfo.productColorSizeStocks
                     let arrs = []
                     arr.forEach(item => {
@@ -144,15 +148,20 @@ export default {
                             arrs.push(item)
                         }
                     })
-                    this.sizeArr = JSON.parse(JSON.stringify(arrs))
+                    this.sizeArr = sortArr('size', JSON.parse(JSON.stringify(arrs)))
                 } else if (t === 'size' && c.isSizeCur) {
-                    if (c.productsize === this.proinfo.selModel.productsize) {
+                    if (c.productsize === this.selModel.productsize) {
                         this.selModel.productsize = 0
                     } else {
                         this.num = 1
                         this.proinfo.selModel = c
                         this.selModel = JSON.parse(JSON.stringify(c))
                     }
+                    /* else if (this.selModel.productcolor === 0) {
+                        this.num = 1
+                        c.productcolor = 0
+                        this.selModel = JSON.parse(JSON.stringify(c))
+                    } */
                     let arr = this.proinfo.productColorSizeStocks
                     let arrc = []
                     arr.forEach(item => {
@@ -174,7 +183,7 @@ export default {
                             arrc.push(item)
                         }
                     })
-                    this.colorArr = JSON.parse(JSON.stringify(arrc))
+                    this.colorArr = sortArr('color', JSON.parse(JSON.stringify(arrc)))
                 }
             }
         }
@@ -216,13 +225,23 @@ export default {
                     }
                 })
             }
-            this.sizeArr = JSON.parse(JSON.stringify(arrs))
-            this.colorArr = JSON.parse(JSON.stringify(arrc))
+            this.sizeArr = sortArr('size', JSON.parse(JSON.stringify(arrs)))
+            this.colorArr = sortArr('color', JSON.parse(JSON.stringify(arrc)))
         },
         maxNum: function (v) {
             this.mNum = v
         }
     }
+}
+
+function sortArr (t, arr) {
+    return arr.sort((x, y) => {
+        if (t === 'color') {
+            return x.productcolor - y.productcolor
+        } else {
+            return x.productsize - y.productsize
+        }
+    })
 }
 </script>
 
