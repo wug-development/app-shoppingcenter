@@ -3,24 +3,24 @@
         <div class="proselcolor-box">
             <div class="proselcolor-proinfo">
                 <div class="proselcolor-img">
-                    <img :src="proinfo.selModel.productcolorImage || proinfo.pic" alt="">
+                    <img :src="selModel.productcolorImage || proinfo.pic" alt="">
                 </div>
                 <div class="proselcolor-name">
                     <div>{{proinfo.name}}</div>
-                    <div class="proselcolor-price">&yen;{{proinfo.selModel.price || proinfo.price}}</div>
+                    <div class="proselcolor-price">&yen;{{selModel.price || proinfo.price}}</div>
                 </div>
                 <div class="proselcolor-close" @click="close"><span><img src="../../assets/images/close.png" alt=""></span></div>
             </div>
             <div class="proselcolor-procolor" v-if="colorArr.length">
                 <div class="proselcolor-title">颜色：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==proinfo.selModel.productcolor?'cur':'') + (c.stock > 0 && c.isColorCur?'':' disable')" :key="i">{{c.productcolorValue }}</li>
+                    <li v-for="(c, i) in colorArr" @click="checkColor(c, 'color')" :class="(c.productcolor==selModel.productcolor?'cur':'') + (c.stock > 0 && c.isColorCur?'':' disable')" :key="i">{{c.productcolorValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-procolor" v-if="sizeArr.length">
                 <div class="proselcolor-title">大小：</div>
                 <ul class="proselcolor-list">
-                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==proinfo.selModel.productsize?'cur':'') + (c.stock > 0 && c.isSizeCur?'':' disable')" :key="i">{{c.productsizeValue }}</li>
+                    <li v-for="(c, i) in sizeArr" @click="checkColor(c, 'size')" :class="(c.productsize==selModel.productsize?'cur':'') + (c.stock > 0 && c.isSizeCur?'':' disable')" :key="i">{{c.productsizeValue }}</li>
                 </ul>
             </div>
             <div class="proselcolor-pronum">
@@ -47,6 +47,7 @@ export default {
         return {
             isDisplay: false,
             proinfo: {},
+            selModel: {},
             num: 1,
             mNum: 1,
             selcolor: {},
@@ -60,11 +61,11 @@ export default {
             this.$emit('close', false)
         },
         jia: function () {
-            if (this.proinfo.selModel.stock) {
-                if (this.num < this.proinfo.selModel.stock) {
+            if (this.selModel.stock) {
+                if (this.num < this.selModel.stock) {
                     this.num = this.num + 1
                 } else {
-                    this.Toast('该商品库存不足最多可买数量' + this.proinfo.selModel.stock)
+                    this.Toast('该商品库存不足最多可买数量' + this.selModel.stock)
                 }
             } else {
                 if (this.num < this.proinfo.stock) {
@@ -84,7 +85,7 @@ export default {
             var pros = []
             if (s) {
                 pros = JSON.parse(s)
-                var p = pros.find((e) => { return e.id === this.proinfo.id && e.selModel.id === this.proinfo.selModel.id })
+                var p = pros.find((e) => { return e.id === this.proinfo.id && e.selModel.id === this.selModel.id })
                 if (p) {
                     p.num = this.num + p.num
                 } else {
@@ -112,9 +113,16 @@ export default {
             })
         },
         checkColor (c, t) {
+            console.log(c)
             if (c.stock > 0) {
                 if (t === 'color' && c.isColorCur) {
-                    this.proinfo.selModel = c
+                    if (c.productcolor === this.selModel.productcolor) {
+                        this.selModel.productcolor = 0
+                    } else {
+                        this.num = 1
+                        this.proinfo.selModel = c
+                        this.selModel = JSON.parse(JSON.stringify(c))
+                    }
                     let arr = this.proinfo.productColorSizeStocks
                     let arrs = []
                     arr.forEach(item => {
@@ -128,7 +136,7 @@ export default {
                             return b.productsize === item.productsize
                         })
                         if (_bindex < 0) {
-                            if (item.productcolor === c.productcolor) {
+                            if (item.productcolor === c.productcolor || this.selModel.productcolor === 0) {
                                 item.isSizeCur = true
                             } else {
                                 item.isSizeCur = false
@@ -136,9 +144,15 @@ export default {
                             arrs.push(item)
                         }
                     })
-                    this.sizeArr = arrs
+                    this.sizeArr = JSON.parse(JSON.stringify(arrs))
                 } else if (t === 'size' && c.isSizeCur) {
-                    this.proinfo.selModel = c
+                    if (c.productsize === this.proinfo.selModel.productsize) {
+                        this.selModel.productsize = 0
+                    } else {
+                        this.num = 1
+                        this.proinfo.selModel = c
+                        this.selModel = JSON.parse(JSON.stringify(c))
+                    }
                     let arr = this.proinfo.productColorSizeStocks
                     let arrc = []
                     arr.forEach(item => {
@@ -152,7 +166,7 @@ export default {
                             return b.productcolor === item.productcolor
                         })
                         if (_bindex < 0) {
-                            if (item.productsize === c.productsize) {
+                            if (item.productsize === c.productsize || this.selModel.productsize === 0) {
                                 item.isColorCur = true
                             } else {
                                 item.isColorCur = false
@@ -160,7 +174,7 @@ export default {
                             arrc.push(item)
                         }
                     })
-                    this.colorArr = arrc
+                    this.colorArr = JSON.parse(JSON.stringify(arrc))
                 }
             }
         }
@@ -168,9 +182,11 @@ export default {
     watch: {
         isShow: function (v) {
             this.isDisplay = v
+            this.selModel = JSON.parse(JSON.stringify(this.proinfo.selModel))
         },
         pro: function (v) {
             this.proinfo = v
+            this.selModel = JSON.parse(JSON.stringify(v.selModel))
             let arr = v.productColorSizeStocks
             let arrc = []
             let arrs = []
@@ -200,8 +216,8 @@ export default {
                     }
                 })
             }
-            this.sizeArr = arrs
-            this.colorArr = arrc
+            this.sizeArr = JSON.parse(JSON.stringify(arrs))
+            this.colorArr = JSON.parse(JSON.stringify(arrc))
         },
         maxNum: function (v) {
             this.mNum = v

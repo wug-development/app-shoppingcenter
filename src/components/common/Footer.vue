@@ -44,7 +44,7 @@ export default {
             align-items: center;
             li{
                 flex-wrap: nowrap;
-                width: 1.875rem;
+                width: 2.5rem;
                 text-align: center;
                 box-sizing: border-box;
                 font-size: .28rem;

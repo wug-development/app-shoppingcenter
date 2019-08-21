@@ -41,7 +41,7 @@
                 <div class="delivery" v-if="credit.creditRule.status == 0 && proPrice >= credit.creditRule.orderprice">
                     <div class="name">
                         <label>积分</label>
-                        <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diYen}}</span>
+                        <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diCountYen}}</span>
                         <span class="jifen" @click="showDesc" v-else>共有{{credit.user.credit}}积分，满{{credit.creditRule.creditcanuse}}可用</span>
                     </div>
                     <div><mt-switch v-model="credit.madeCredit.isMade"></mt-switch></div>
@@ -100,7 +100,8 @@ export default {
                     isMade: false,
                     Number: 0,
                     usable: 0,
-                    diYen: 0
+                    diYen: 0,
+                    diCountYen: 0
                 },
                 creditRule: {},
                 user: {}
@@ -130,7 +131,7 @@ export default {
             this.pickerValue = v[0]
         },
         btn_ok: function () {
-            this.credit.madeCredit.Number = this.pickerValue
+            this.credit.madeCredit.Number = this.pickerValue || 0
             this.jifenVisible = false
             this.credit.madeCredit.diYen = this.credit.madeCredit.Number / this.credit.creditRule.creditunit
             this.countPrice()
@@ -245,7 +246,7 @@ export default {
         },
         countPrice () {
             if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade) {
-                this.totalPrice = this.totalPrice - this.credit.madeCredit.diYen
+                this.totalPrice = keepTwoDecimal(this.proPrice - this.credit.madeCredit.diYen)
             }
         },
         showDesc () {
@@ -296,17 +297,18 @@ export default {
                 console.log(rule)
                 if (rule.status === 0) {
                     let arr = []
-                    for (let i = rule.creditunit; i < this.credit.user.credit; i += rule.creditunit) {
+                    // rule.creditunit
+                    for (let i = 0; i <= this.credit.user.credit; i += rule.creditunit) {
                         if (this.proPrice / 2 > (i / this.credit.creditRule.creditunit)) {
                             arr.push(i)
                         } else {
-                            console.log(i)
                             break
                         }
                     }
                     if (arr.length > 0) {
                         this.jifenSlots[0].values = arr
                         this.credit.madeCredit.usable = arr[arr.length - 1]
+                        this.credit.madeCredit.diCountYen = this.credit.madeCredit.usable / this.credit.creditRule.creditunit
                     }
                 }
             }
@@ -359,7 +361,11 @@ function keepTwoDecimal (num) {
         return 0
     }
     result = Math.round(num * 100) / 100
-    return result
+    if (result) {
+        return result.toFixed(2)
+    } else {
+        return 0.00
+    }
 }
 
 </script>

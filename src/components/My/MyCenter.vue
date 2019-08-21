@@ -9,6 +9,7 @@
             <div class="all-order" @click="toOrderList(1)">全部订单</div>
         </div>
         <ul class="my-action-list">
+            <li><span>我的积分</span><span class="content">{{credit.credit}} 积分</span></li>
             <li><router-link :to="{path:'/my/myaddress'}"><span>收货地址</span></router-link></li>
             <li class="hide" @click="tolink('/my/myinfo')"><span>我的信息</span></li>
             <li class="hide"><a href="/my/myconpon"><span>我的优惠券</span><span class="content">0 张可用</span></a></li>
@@ -30,7 +31,10 @@ export default {
         return {
             account: '',
             price: 0,
-            corder: 0
+            corder: 0,
+            credit: {
+                credit: 0
+            }
         }
     },
     methods: {
@@ -41,6 +45,11 @@ export default {
         }
     },
     beforeMount () {
+        let _user = sessionStorage.getItem('user')
+        if (_user) {
+            this.credit = JSON.parse(_user)
+        }
+
         this.$store.state.menu = true
         this.$store.state.menuCur = 4
         this.$http.get(this.apis + '/admin/user/getUserByOpenid', {params: {
@@ -129,26 +138,38 @@ export default {
             padding-left: .4rem;
             box-sizing: border-box;
             li{
+                height: .9rem;
+                line-height: .4rem;
                 padding: .25rem 0;
                 border-top: 0.02rem solid #ccc;
                 box-sizing: border-box;
                 position: relative;
+                display: flex;
+                justify-content: space-between;
                 a{
                     display: flex;
+                    width: 100%;
+                    height: 100%;
                     justify-content: space-between;
-                    line-height: .45rem;
+                    line-height: .4rem;
                     color: #6c6c6c;
-                    .content{
-                        color: #f00;
-                        margin-right: .5rem;
-                        font-size: .24rem;
-                    }
                 }
+                span{
+                    height: 100%;
+                }
+                .content{
+                    color: #f00;
+                    margin-right: .5rem;
+                    font-size: .24rem;
+                }
+            }
+            .hide{
+                display: none;
             }
             li:first-child{
                 border: 0;
             }
-            li::after{
+            li a::after{
                 content: '';
                 position: absolute;
                 top: .24rem;
@@ -157,7 +178,7 @@ export default {
                 width: .4rem;
                 height: .4rem;
                 background: url(../../assets/images/right.png) no-repeat center;
-                background-size: 100%;
+                background-size: 90%;
             }
         }
         .my-outlogin{

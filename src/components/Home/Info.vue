@@ -144,6 +144,7 @@ export default {
             // }
         },
         buyNow: function () {
+            this.pro.num = 1
             sessionStorage.setItem('buy', JSON.stringify(this.pro))
             this.$router.push({
                 path: '/orderbooking?ty=buy'
