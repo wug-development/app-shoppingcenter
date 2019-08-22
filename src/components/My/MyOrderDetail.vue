@@ -34,6 +34,7 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
+                <li v-if="orderinfo.usebalance > 0"><span>余额</span><span>-&yen;{{orderinfo.usebalance}}</span></li>
                 <li v-if="orderinfo.creditmoney && orderinfo.creditmoney > 0"><span>积分</span><span>-&yen;{{orderinfo.creditmoney}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
@@ -66,7 +67,15 @@ export default {
 
         let info = sessionStorage.getItem('orderitem')
         this.orderinfo = JSON.parse(info)
-        console.log(this.orderinfo)
+        console.dir(this.orderinfo)
+
+        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {}})
+        .then(res => {
+            if (res && res.data && res.data.code === 1) {
+                const rule = res.data.obj.creditRule
+                console.log(rule)
+            }
+        })
     },
     methods: {
         toinfo: function (id, mid) {

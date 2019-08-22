@@ -53,8 +53,8 @@ export default {
         if (this.wxCode) {
             sessionStorage.setItem('wxcode', this.wxCode)
         } else {
-            // this.wxCode = sessionStorage.getItem('wxcode') || '001BsN5N1m5hI615h07N1Rk06N1BsN5K'
-            window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23%2Fhome%2Flist%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
+            this.wxCode = sessionStorage.getItem('wxcode') || '0212Mati01mKxp1zkxti0PQ3ti02MatT'
+            // window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23%2Fhome%2Flist%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
         }
         this.loadBottom()
     },

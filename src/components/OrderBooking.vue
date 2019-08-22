@@ -127,7 +127,7 @@ export default {
                 path: '/my/myaddress?id=' + id + '&ty=' + this.buytype
             })
         },
-        onValuesChange: function (picker, v) {
+        onValuesChange (picker, v) {
             this.pickerValue = v[0]
         },
         openCloseCredit: function () {
