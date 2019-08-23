@@ -294,12 +294,14 @@ export default {
             this.credit.user = JSON.parse(_user)
         }
 
-        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {}})
+        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {
+            userid: this.credit.user.id
+        }})
         .then(res => {
             if (res && res.data && res.data.code === 1) {
                 this.credit.creditRule = res.data.obj.creditRule
                 const rule = this.credit.creditRule
-                console.log(rule)
+                this.credit.user.credit = res.data.obj.userCredit
                 if (rule.status === 0) {
                     let arr = []
                     // rule.creditunit

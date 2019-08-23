@@ -25,9 +25,26 @@
                     </div>
                 </li>
             </ul>
-            <div class="delivery">
-                <span>配送方式</span>
-                <span>快递免运费</span>
+            <div class="other-box">
+                <div class="delivery">
+                    <span>配送方式</span>
+                    <span>快递免运费</span>
+                </div>
+                <div class="delivery" v-if="credit.creditRule.status == 0 && orderinfo.price >= credit.creditRule.orderprice">
+                    <div class="name">
+                        <label>积分</label>
+                        <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diCountYen}}</span>
+                        <span class="jifen" @click="showDesc" v-else>共有{{credit.user.credit}}积分，满{{credit.creditRule.creditcanuse}}可用</span>
+                    </div>
+                    <div><mt-switch v-model="credit.madeCredit.isMade" @change="openCloseCredit"></mt-switch></div>
+                </div>
+                <div class="jifen-made" v-if="credit.madeCredit.isMade">
+                    <span>使用</span>
+                    <span class="ddl_jifen" @click="jifenVisible = true">{{credit.madeCredit.Number}}</span>
+                    <span>积分</span>
+                    <span>，抵</span>
+                    <span class="jifen rmb" @click="showDesc">&yen;{{credit.madeCredit.diYen}}.00</span>
+                </div>
             </div>
         </div>
 
@@ -35,17 +52,25 @@
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
                 <li v-if="orderinfo.usebalance > 0"><span>余额</span><span>-&yen;{{orderinfo.usebalance}}</span></li>
-                <li v-if="orderinfo.creditmoney && orderinfo.creditmoney > 0"><span>积分</span><span>-&yen;{{orderinfo.creditmoney}}.00</span></li>
+                <li v-if="credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
-                合计：<span>&yen;{{orderinfo.price}}</span>
+                合计：<span>&yen;{{totalPrice}}</span>
             </div>
         </div>
         <div class="totalbox" v-if="orderinfo.status == 1">
-            <div class="amount">合计：<span>&yen;{{orderinfo.price}}</span></div>
-            <div class="btn" @click="wxPay">去支付</div>
+            <div class="amount">合计：<span>&yen;{{totalPrice}}</span></div>
+            <div class="btn" @click="submit">去支付</div>
         </div>
+        <mt-popup v-model="jifenVisible" class="jifen-select" position="bottom">
+            <div class="btn-box">
+                <span class="btn-cancel" @click="jifenVisible = false">取消</span>
+                <span></span>
+                <span class="btn-sure" @click="btn_ok">确定</span>
+            </div>
+            <mt-picker :slots="jifenSlots" @change="onValuesChange" :visibleItemCount="3"></mt-picker>
+        </mt-popup>
     </div>
 </template>
 
@@ -56,7 +81,27 @@ export default {
     name: 'MyOrderDetail',
     data () {
         return {
-            orderinfo: {}
+            credit: {
+                madeCredit: {
+                    isMade: false,
+                    Number: 0,
+                    usable: 0,
+                    diYen: 0,
+                    diCountYen: 0
+                },
+                creditRule: {},
+                user: {}
+            },
+            orderinfo: {},
+            pickerValue: 0,
+            jifenVisible: false,
+            jifenSlots: [{
+                flex: 1,
+                values: [],
+                className: 'slot1',
+                textAlign: 'center'
+            }],
+            totalPrice: 0
         }
     },
     components: {
@@ -67,13 +112,44 @@ export default {
 
         let info = sessionStorage.getItem('orderitem')
         this.orderinfo = JSON.parse(info)
-        console.dir(this.orderinfo)
+        console.log(this.orderinfo)
+        this.totalPrice = this.orderinfo.price
 
-        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {}})
+        let _user = sessionStorage.getItem('user')
+        if (_user) {
+            this.credit.user = JSON.parse(_user)
+        }
+
+        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {
+            userid: this.credit.user.id
+        }})
         .then(res => {
             if (res && res.data && res.data.code === 1) {
-                const rule = res.data.obj.creditRule
-                console.log(rule)
+                this.credit.user.credit = res.data.obj.userCredit
+
+                this.credit.creditRule = res.data.obj.creditRule
+                const rule = this.credit.creditRule
+                if (rule.status === 0) {
+                    let arr = []
+                    for (let i = 0; i <= this.credit.user.credit; i += rule.creditunit) {
+                        if (this.orderinfo.price / 2 > (i / this.credit.creditRule.creditunit)) {
+                            arr.push(i)
+                        } else {
+                            break
+                        }
+                    }
+                    if (arr.length > 0) {
+                        this.jifenSlots[0].values = arr
+                        this.credit.madeCredit.usable = arr[arr.length - 1]
+                        this.credit.madeCredit.diCountYen = this.credit.madeCredit.usable / this.credit.creditRule.creditunit
+                        if (this.orderinfo.creditmoney > 0 && this.credit.madeCredit.diCountYen >= this.orderinfo.creditmoney) {
+                            this.credit.madeCredit.isMade = true
+                            this.credit.madeCredit.Number = this.orderinfo.usercreditnumber
+                            this.credit.madeCredit.diYen = this.orderinfo.creditmoney
+                            this.countPrice()
+                        }
+                    }
+                }
             }
         })
     },
@@ -81,6 +157,82 @@ export default {
         toinfo: function (id, mid) {
             this.$router.push({
                 path: '/home/info?id=' + id + '&mid=' + mid
+            })
+        },
+        onValuesChange (picker, v) {
+            this.pickerValue = v[0]
+        },
+        openCloseCredit: function () {
+            this.countPrice()
+        },
+        btn_ok: function () {
+            this.credit.madeCredit.Number = this.pickerValue || 0
+            this.jifenVisible = false
+            this.credit.madeCredit.diYen = this.credit.madeCredit.Number / this.credit.creditRule.creditunit
+            this.countPrice()
+        },
+        countPrice () {
+            if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
+                this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.credit.madeCredit.diYen)
+            } else {
+                this.totalPrice = keepTwoDecimal(this.orderinfo.price)
+            }
+        },
+        submit () {
+            let pids = ''
+            let nums = ''
+            let _models = ''
+            for (let i in this.orderinfo.orderProductList) {
+                if (i > 0) {
+                    pids = pids + ','
+                    nums = nums + ','
+                    _models = _models + ','
+                }
+                pids += this.orderinfo.orderProductList[i].productid
+                _models += this.orderinfo.orderProductList[i].id
+                nums += this.orderinfo.orderProductList[i].buynumber
+            }
+            this.$http.get(this.apis + '/order/addOrderAjaxNew', {params: {
+                openid: sessionStorage.getItem('openID'),
+                orderid: this.orderinfo.orderno,
+                address: this.orderinfo.address,
+                productIds: pids,
+                buyproductNumbers: nums,
+                productcolorsizestocks: _models,
+                useCredit: this.credit.madeCredit.isMade ? 1 : 0,
+                useCreditNumber: this.credit.madeCredit.Number
+            }})
+            .then(res => {
+                console.log(res)
+                if (res && res.data) {
+                    if (res.data.code === 1) {
+                        console.log(res.data.obj)
+                        this.wxPay(res.data.obj[0])
+                    } else if (res.data.code === 2) {
+                        this.$messagebox('库存不足')
+                        this.Indicator.close()
+                        this.isSubmited = false
+                    } else if (res.data.code === 3) {
+                        this.$messagebox('下单成功')
+                        this.Indicator.close()
+                        this.isSubmited = false
+                        this.$router.push({
+                            path: '/my'
+                        })
+                    } else {
+                        this.$messagebox(res.data.msg)
+                        this.Indicator.close()
+                        this.isSubmited = false
+                    }
+                } else {
+                    this.$messagebox('提交失败')
+                    this.Indicator.close()
+                    this.isSubmited = false
+                }
+            })
+            .catch(e => {
+                this.Indicator.close()
+                this.isSubmited = false
             })
         },
         wxPay: function () {
@@ -104,6 +256,9 @@ export default {
                 this.Toast('微信支付调用失败')
                 this.isSubmited = false
             })
+        },
+        showDesc () {
+            this.$messagebox('温馨提示', this.credit.creditRule.description)
         }
     }
 }
@@ -146,6 +301,19 @@ function onBridgeReady (res, vue) {
         }
     )
 }
+
+function keepTwoDecimal (num) {
+    var result = parseFloat(num)
+    if (isNaN(result)) {
+        return 0
+    }
+    result = Math.round(num * 100) / 100
+    if (result) {
+        return result.toFixed(2)
+    } else {
+        return 0.00
+    }
+}
 </script>
 
 <style lang="scss">
@@ -153,6 +321,7 @@ function onBridgeReady (res, vue) {
         height: 100%;
         padding-top: .9rem;
         background-color: #f9f9f9;
+        box-sizing: border-box;
         .header-box{
             box-shadow: none;
         }
@@ -235,14 +404,92 @@ function onBridgeReady (res, vue) {
                     }
                 }
             }
-            .delivery{
-                background-color: #fff;
+            .other-box{
                 padding: 0 .2rem;
-                display: flex;
-                height: .8rem;
-                line-height: .8rem;
-                display: flex;
-                justify-content: space-between;
+                background-color: #fff;
+                .delivery{
+                    display: flex;
+                    height: .8rem;
+                    line-height: .8rem;
+                    justify-content: space-between;
+                    border-top: .02rem solid #ddd;
+                    box-sizing: border-box;
+                    .name{
+                        display: flex;
+                        label{
+                            min-width: 1rem;
+                        }
+                        .cur{
+                            font-weight: bold;
+                        }
+                    }
+                    .mint-switch{
+                        top: .18rem;
+                        height: .4rem;
+                        .mint-switch-core{
+                            height: .44rem;
+                        }
+                        .mint-switch-input:checked + .mint-switch-core {
+                            border-color: #1AAD19;
+                            background-color: #1AAD19;
+                        }
+                        .mint-switch-input:checked + .mint-switch-core::after {
+                            transform: translateX(30px);
+                        }
+                        .mint-switch-core::before{
+                            height: .4rem;
+                        }
+                        .mint-switch-core::after {
+                            width: .4rem;
+                            height: .4rem;
+                        }
+                    }
+                }
+                .delivery:first-child{
+                    border: 0;
+                }
+                .jifen-made{
+                    display: flex;
+                    height: .8rem;
+                    line-height: .8rem;
+                    .ddl_jifen{
+                        margin: .2rem .1rem 0 .1rem;
+                        min-width: 1rem;
+                        height: .4rem;
+                        line-height: .4rem;
+                        border: .02rem solid #ccc;
+                        padding: 0 .4rem 0 .1rem;
+                        position: relative;
+                        box-sizing: border-box;
+                    }
+                    .ddl_jifen::after{
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        width: .4rem;
+                        height: .4rem;
+                        background: url('../../assets/images/right.png') no-repeat center;
+                        background-size: .3rem;
+                        transform: rotate(90deg);
+                    }
+                    .rmb{
+                        color: #f00000;
+                    }
+                }
+                .jifen::after{
+                    content: "?";
+                    color: #666;
+                    font-size: .24rem;
+                    display: inline-block;
+                    width: .24rem;
+                    height: .24rem;
+                    line-height: .24rem;
+                    text-align: center;
+                    border-radius: .24rem;
+                    border: .02rem solid #666;
+                    margin-left: .1rem;
+                }
             }
         }
         .totalprice{
@@ -301,6 +548,30 @@ function onBridgeReady (res, vue) {
             }
             .btn:active{
                 background-color: #DA0000;
+            }
+        }
+        .jifen-select{
+            width: 100%;
+            height: 138px;
+            .btn-box{
+                display: flex;
+                height: 30px;
+                justify-content: space-around;
+                align-items: center;
+                box-shadow: 2px 2px 4px #ddd;
+                span{
+                    padding: 0 20px;
+                    height: 24px;
+                    line-height: 24px;
+                    border-radius: 5px;
+                }
+                .btn-cancel{
+                    background-color: #ddd;
+                }
+                .btn-sure{
+                    background-color: #c71f2c;
+                    color: #fff;
+                }
             }
         }
     }
