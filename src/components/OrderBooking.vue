@@ -59,6 +59,7 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{proPrice}}</span></li>
+                <li v-if="balance > 0"><span>余额</span><span>-&yen;{{balance}}</span></li>
                 <li v-if="credit.madeCredit.isMade && credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
@@ -106,6 +107,7 @@ export default {
                 creditRule: {},
                 user: {}
             },
+            balance: 0,
             pickerValue: 0,
             jifenVisible: false,
             jifenSlots: [{
@@ -209,6 +211,11 @@ export default {
                 this.isSubmited = false
             }
         },
+        toOrderList: function () {
+            this.$router.push({
+                path: '/my/myorderlist?ty=0'
+            })
+        },
         getAddr: function () {
             this.$http.get(this.apis + '/address/getCustomerAddressByOpenIdAjax', {params: {
                 openId: sessionStorage.getItem('openID')
@@ -239,19 +246,21 @@ export default {
                     this.Toast('微信支付调用失败')
                     this.Indicator.close()
                     this.isSubmited = false
+                    this.toOrderList()
                 }
             })
             .catch(e => {
                 this.Indicator.close()
                 this.Toast('微信支付调用失败')
                 this.isSubmited = false
+                this.toOrderList()
             })
         },
         countPrice () {
             if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
-                this.totalPrice = keepTwoDecimal(this.proPrice - this.credit.madeCredit.diYen)
+                this.totalPrice = keepTwoDecimal(this.proPrice - this.credit.madeCredit.diYen - this.balance)
             } else {
-                this.totalPrice = keepTwoDecimal(this.proPrice)
+                this.totalPrice = keepTwoDecimal(this.proPrice - this.balance)
             }
         },
         showDesc () {
@@ -319,6 +328,7 @@ export default {
                     }
                 }
             }
+            this.countPrice()
         })
     }
 }

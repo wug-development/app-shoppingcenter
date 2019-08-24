@@ -30,7 +30,7 @@
                     <span>配送方式</span>
                     <span>快递免运费</span>
                 </div>
-                <div class="delivery" v-if="credit.creditRule.status == 0 && orderinfo.price >= credit.creditRule.orderprice">
+                <div class="delivery" v-if="orderinfo.status === 1 && credit.creditRule.status == 0 && orderinfo.price >= credit.creditRule.orderprice">
                     <div class="name">
                         <label>积分</label>
                         <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diCountYen}}</span>
@@ -38,7 +38,7 @@
                     </div>
                     <div><mt-switch v-model="credit.madeCredit.isMade" @change="openCloseCredit"></mt-switch></div>
                 </div>
-                <div class="jifen-made" v-if="credit.madeCredit.isMade">
+                <div class="jifen-made" v-if="orderinfo.status === 1 && credit.madeCredit.isMade">
                     <span>使用</span>
                     <span class="ddl_jifen" @click="jifenVisible = true">{{credit.madeCredit.Number}}</span>
                     <span>积分</span>
@@ -51,8 +51,8 @@
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
-                <li v-if="orderinfo.usebalance > 0"><span>余额</span><span>-&yen;{{orderinfo.usebalance}}</span></li>
-                <li v-if="credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
+                <li v-if="this.orderinfo.status < 4 && balance > 0"><span>余额</span><span>-&yen;{{balance}}</span></li>
+                <li v-if="orderinfo.status === 1 && credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
@@ -101,6 +101,7 @@ export default {
                 className: 'slot1',
                 textAlign: 'center'
             }],
+            balance: 0,
             totalPrice: 0
         }
     },
@@ -125,8 +126,9 @@ export default {
         }})
         .then(res => {
             if (res && res.data && res.data.code === 1) {
+                console.log(res.data.obj)
                 this.credit.user.credit = res.data.obj.userCredit
-
+                this.balance = res.data.obj.balance || 0
                 this.credit.creditRule = res.data.obj.creditRule
                 const rule = this.credit.creditRule
                 if (rule.status === 0) {
@@ -172,8 +174,14 @@ export default {
             this.countPrice()
         },
         countPrice () {
-            if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
-                this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.credit.madeCredit.diYen)
+            if (this.orderinfo.status === 1) {
+                if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
+                    this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.credit.madeCredit.diYen - this.balance)
+                } else {
+                    this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.balance)
+                }
+            } else if (this.orderinfo.status === 2 || this.orderinfo.status === 3) {
+                this.totalPrice = keepTwoDecimal(this.orderinfo.usecash)
             } else {
                 this.totalPrice = keepTwoDecimal(this.orderinfo.price)
             }
@@ -194,7 +202,7 @@ export default {
             }
             this.$http.get(this.apis + '/order/addOrderAjaxNew', {params: {
                 openid: sessionStorage.getItem('openID'),
-                orderid: this.orderinfo.orderno,
+                orderId: this.orderinfo.id,
                 address: this.orderinfo.address,
                 productIds: pids,
                 buyproductNumbers: nums,

@@ -14,7 +14,12 @@
                 <div class="listbox-item-lf listbox-item-xilie">
                     {{pro.name}}
                 </div>
-                <div class="listbox-item-lf listbox-item-price"><span>&yen;</span>{{pro.price}}</div>
+                <template v-if="pro.needattr == 0">
+                    <div class="listbox-item-lf listbox-item-price"><span>&yen;</span>{{pro.price}}</div>
+                </template>
+                <template v-else-if="pro.productColorSizeStocks && pro.productColorSizeStocks.length > 0">
+                    <div class="listbox-item-lf listbox-item-price"><span>&yen;</span>{{pro.productColorSizeStocks[0].price}}</div>
+                </template>
             </li>
         </ul>
         <div v-show="!allLoaded" slot="bottom" class="mint-loadmore-bottom">
@@ -53,8 +58,8 @@ export default {
         if (this.wxCode) {
             sessionStorage.setItem('wxcode', this.wxCode)
         } else {
-            this.wxCode = sessionStorage.getItem('wxcode') || '0717CntO0aSKu429RtwO0ujttO07Cntk'
-            // window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23%2Fhome%2Flist%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
+            this.wxCode = sessionStorage.getItem('wxcode') || '021pGeRy0L6y0f15o8Ty02EdRy0pGeRe'
+            // window.location.href = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx39a01f81408fb9c8&redirect_uri=http%3A%2F%2Fwww.lovzvzu.com%2Findex.html%23% %2Flist%3Fid%3D' + this.id + '&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect'
         }
         this.loadBottom()
     },
