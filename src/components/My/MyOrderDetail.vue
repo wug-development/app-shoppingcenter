@@ -30,7 +30,7 @@
                     <span>配送方式</span>
                     <span>快递免运费</span>
                 </div>
-                <div class="delivery" v-if="orderinfo.status === 1 && credit.creditRule.status == 0 && orderinfo.price >= credit.creditRule.orderprice">
+                <!-- <div class="delivery" v-if="orderinfo.status === 1 && credit.creditRule.status == 0 && orderinfo.price >= credit.creditRule.orderprice">
                     <div class="name">
                         <label>积分</label>
                         <span v-if="credit.user.credit > credit.creditRule.creditcanuse">共有{{credit.user.credit}}积分，可用{{credit.madeCredit.usable}}积分，抵&yen;{{credit.madeCredit.diCountYen}}</span>
@@ -44,24 +44,29 @@
                     <span>积分</span>
                     <span>，抵</span>
                     <span class="jifen rmb" @click="showDesc">&yen;{{credit.madeCredit.diYen}}.00</span>
-                </div>
+                </div> -->
             </div>
         </div>
 
         <div class="totalprice">
             <ul class="price-item">
                 <li><span>商品金额</span><span>&yen;{{orderinfo.price}}</span></li>
-                <li v-if="this.orderinfo.status < 4 && balance > 0"><span>余额</span><span>-&yen;{{balance}}</span></li>
-                <li v-if="orderinfo.status === 1 && credit.madeCredit.diYen > 0"><span>积分</span><span>-&yen;{{credit.madeCredit.diYen}}.00</span></li>
+                <li v-if="orderinfo.usebalance > 0"><span>余额</span><span>-&yen;{{orderinfo.usebalance}}</span></li>
+                <li v-if="orderinfo.creditmoney > 0"><span>积分</span><span>-&yen;{{orderinfo.creditmoney}}.00</span></li>
                 <li><span>运费</span><span>+&yen;0.00</span></li>
             </ul>
             <div class="total">
                 合计：<span>&yen;{{totalPrice}}</span>
             </div>
         </div>
+
+        <div class="btn_cancelOrder" v-if="orderinfo.status == 1" @click="cancelOrder">
+            取消订单
+        </div>
+
         <div class="totalbox" v-if="orderinfo.status == 1">
             <div class="amount">合计：<span>&yen;{{totalPrice}}</span></div>
-            <div class="btn" @click="submit">去支付</div>
+            <div class="btn" @click="wxPay">去支付</div>
         </div>
         <mt-popup v-model="jifenVisible" class="jifen-select" position="bottom">
             <div class="btn-box">
@@ -114,6 +119,7 @@ export default {
         let info = sessionStorage.getItem('orderitem')
         this.orderinfo = JSON.parse(info)
         console.log(this.orderinfo)
+        this.orderinfo.price = keepTwoDecimal(this.orderinfo.price)
         this.totalPrice = this.orderinfo.price
 
         let _user = sessionStorage.getItem('user')
@@ -121,39 +127,44 @@ export default {
             this.credit.user = JSON.parse(_user)
         }
 
-        this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {
-            userid: this.credit.user.id
-        }})
-        .then(res => {
-            if (res && res.data && res.data.code === 1) {
-                console.log(res.data.obj)
-                this.credit.user.credit = res.data.obj.userCredit
-                this.balance = res.data.obj.balance || 0
-                this.credit.creditRule = res.data.obj.creditRule
-                const rule = this.credit.creditRule
-                if (rule.status === 0) {
-                    let arr = []
-                    for (let i = 0; i <= this.credit.user.credit; i += rule.creditunit) {
-                        if (this.orderinfo.price / 2 > (i / this.credit.creditRule.creditunit)) {
-                            arr.push(i)
-                        } else {
-                            break
-                        }
-                    }
-                    if (arr.length > 0) {
-                        this.jifenSlots[0].values = arr
-                        this.credit.madeCredit.usable = arr[arr.length - 1]
-                        this.credit.madeCredit.diCountYen = this.credit.madeCredit.usable / this.credit.creditRule.creditunit
-                        if (this.orderinfo.creditmoney > 0 && this.credit.madeCredit.diCountYen >= this.orderinfo.creditmoney) {
-                            this.credit.madeCredit.isMade = true
-                            this.credit.madeCredit.Number = this.orderinfo.usercreditnumber
-                            this.credit.madeCredit.diYen = this.orderinfo.creditmoney
-                            this.countPrice()
-                        }
-                    }
-                }
-            }
-        })
+        this.orderinfo.creditmoney = keepTwoDecimal(this.orderinfo.creditmoney || 0)
+        this.orderinfo.usebalance = keepTwoDecimal(this.orderinfo.usebalance || 0)
+
+        this.countPrice()
+
+        // this.$http.get(this.apis + '/creditrule/findCreditRule', {params: {
+        //     userid: this.credit.user.id
+        // }})
+        // .then(res => {
+        //     if (res && res.data && res.data.code === 1) {
+        //         console.log(res.data.obj)
+        //         this.credit.user.credit = res.data.obj.userCredit
+        //         this.balance = res.data.obj.balance || 0
+        //         this.credit.creditRule = res.data.obj.creditRule
+        //         const rule = this.credit.creditRule
+        //         if (rule.status === 0) {
+        //             let arr = []
+        //             for (let i = 0; i <= this.credit.user.credit; i += rule.creditunit) {
+        //                 if (this.orderinfo.price / 2 > (i / this.credit.creditRule.creditunit)) {
+        //                     arr.push(i)
+        //                 } else {
+        //                     break
+        //                 }
+        //             }
+        //             if (arr.length > 0) {
+        //                 this.jifenSlots[0].values = arr
+        //                 this.credit.madeCredit.usable = arr[arr.length - 1]
+        //                 this.credit.madeCredit.diCountYen = this.credit.madeCredit.usable / this.credit.creditRule.creditunit
+        //                 if (this.orderinfo.creditmoney > 0 && this.credit.madeCredit.diCountYen >= this.orderinfo.creditmoney) {
+        //                     this.credit.madeCredit.isMade = true
+        //                     this.credit.madeCredit.Number = this.orderinfo.usercreditnumber
+        //                     this.credit.madeCredit.diYen = this.orderinfo.creditmoney
+        //                     this.countPrice()
+        //                 }
+        //             }
+        //         }
+        //     }
+        // })
     },
     methods: {
         toinfo: function (id, mid) {
@@ -174,17 +185,7 @@ export default {
             this.countPrice()
         },
         countPrice () {
-            if (this.orderinfo.status === 1) {
-                if (this.credit.creditRule.status === 0 && this.credit.madeCredit.isMade === true) {
-                    this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.credit.madeCredit.diYen - this.balance)
-                } else {
-                    this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.balance)
-                }
-            } else if (this.orderinfo.status === 2 || this.orderinfo.status === 3) {
-                this.totalPrice = keepTwoDecimal(this.orderinfo.usecash)
-            } else {
-                this.totalPrice = keepTwoDecimal(this.orderinfo.price)
-            }
+            this.totalPrice = keepTwoDecimal(this.orderinfo.price - this.orderinfo.creditmoney - this.orderinfo.usebalance)
         },
         submit () {
             let pids = ''
@@ -267,6 +268,21 @@ export default {
         },
         showDesc () {
             this.$messagebox('温馨提示', this.credit.creditRule.description)
+        },
+        cancelOrder () {
+            this.$messagebox.confirm('是否确定取消订单').then(() => {
+                this.$http.get(this.apis + '/order/cancelOrderAjax', {params: {
+                    'orderId': this.orderinfo.id
+                }})
+                .then(res => {
+                    console.log(res)
+                    if (res && res.data && res.data.code === 1) {
+                        this.$router.push({
+                            path: '/my/myorderlist?ty=1'
+                        })
+                    }
+                })
+            })
         }
     }
 }
@@ -526,6 +542,16 @@ function keepTwoDecimal (num) {
                     color: #f00;
                 }
             }
+        }
+        .btn_cancelOrder{
+            width: 5rem;
+            height: .7rem;
+            text-align: center;
+            line-height: .7rem;
+            margin: 1rem auto;
+            background-color: #ddd;
+            border-radius: .1rem;
+            font-size: .28rem;
         }
         .totalbox{
             position: absolute;

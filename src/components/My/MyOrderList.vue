@@ -62,6 +62,7 @@ export default {
                 case 3: txt = '已送达'; break
                 case 4: txt = '订单取消'; break
                 case 6: txt = '订单关闭'; break
+                case 8: txt = '订单取消'; break
             }
             return txt
         },

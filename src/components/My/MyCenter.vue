@@ -9,7 +9,7 @@
             <div class="all-order" @click="toOrderList(1)">全部订单</div>
         </div>
         <ul class="my-action-list">
-            <li><span>我的积分</span><span class="content">{{credit.credit}} 积分</span></li>
+            <li><span>我的积分</span><span class="content">{{credit}} 积分</span></li>
             <li><router-link :to="{path:'/my/myaddress'}"><span>收货地址</span></router-link></li>
             <li class="hide" @click="tolink('/my/myinfo')"><span>我的信息</span></li>
             <li class="hide"><a href="/my/myconpon"><span>我的优惠券</span><span class="content">0 张可用</span></a></li>
@@ -32,9 +32,7 @@ export default {
             account: '',
             price: 0,
             corder: 0,
-            credit: {
-                credit: 0
-            }
+            credit: 0
         }
     },
     methods: {
@@ -45,11 +43,6 @@ export default {
         }
     },
     beforeMount () {
-        let _user = sessionStorage.getItem('user')
-        if (_user) {
-            this.credit = JSON.parse(_user)
-        }
-
         this.$store.state.menu = true
         this.$store.state.menuCur = 4
         this.$http.get(this.apis + '/admin/user/getUserByOpenid', {params: {
@@ -61,6 +54,7 @@ export default {
                 this.account = res.data.obj.name
                 this.price = res.data.obj.balance
                 this.corder = res.data.obj.weizhifu
+                this.credit = res.data.obj.userCredit
             }
         })
     }

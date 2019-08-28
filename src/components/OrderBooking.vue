@@ -141,6 +141,11 @@ export default {
             this.credit.madeCredit.diYen = this.credit.madeCredit.Number / this.credit.creditRule.creditunit
             this.countPrice()
         },
+        toOrderList: function (e) {
+            this.$router.push({
+                path: '/my/myorderlist?ty=' + e
+            })
+        },
         submitOrder: function () {
             if (this.isSubmited) {
                 return false
@@ -188,13 +193,12 @@ export default {
                             this.$messagebox('下单成功')
                             this.Indicator.close()
                             this.isSubmited = false
-                            this.$router.push({
-                                path: '/my'
-                            })
+                            this.toOrderList(1)
                         } else {
                             this.$messagebox(res.data.msg)
                             this.Indicator.close()
                             this.isSubmited = false
+                            this.toOrderList(0)
                         }
                     } else {
                         this.$messagebox('提交失败')
@@ -210,11 +214,6 @@ export default {
                 this.$messagebox('请选择收货地址')
                 this.isSubmited = false
             }
-        },
-        toOrderList: function () {
-            this.$router.push({
-                path: '/my/myorderlist?ty=0'
-            })
         },
         getAddr: function () {
             this.$http.get(this.apis + '/address/getCustomerAddressByOpenIdAjax', {params: {
@@ -246,14 +245,14 @@ export default {
                     this.Toast('微信支付调用失败')
                     this.Indicator.close()
                     this.isSubmited = false
-                    this.toOrderList()
+                    this.toOrderList(0)
                 }
             })
             .catch(e => {
                 this.Indicator.close()
                 this.Toast('微信支付调用失败')
                 this.isSubmited = false
-                this.toOrderList()
+                this.toOrderList(0)
             })
         },
         countPrice () {
@@ -309,8 +308,10 @@ export default {
         .then(res => {
             if (res && res.data && res.data.code === 1) {
                 this.credit.creditRule = res.data.obj.creditRule
+                console.log(res.data.obj)
                 const rule = this.credit.creditRule
                 this.credit.user.credit = res.data.obj.userCredit
+                this.balance = res.data.obj.balance
                 if (rule.status === 0) {
                     let arr = []
                     // rule.creditunit
@@ -360,13 +361,13 @@ function onBridgeReady (res, vue) {
             console.log(res)
             if (res.err_msg === 'get_brand_wcpay_request:ok') {
                 vue.Toast('支付成功')
-                vue.$router.push({
-                    path: '/my'
-                })
+                vue.toOrderList(1)
             } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
                 vue.Toast('取消支付')
+                vue.toOrderList(0)
             } else {
                 vue.Toast('支付失败')
+                vue.toOrderList(0)
             }
         }
     )
